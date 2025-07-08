@@ -88,11 +88,6 @@
                                             <td>{{ $barangKeluar->tanggal_keluar ? \Carbon\Carbon::parse($barangKeluar->tanggal_keluar)->format('d-m-Y') : '-' }}</td>
                                             <td>
                                                 <a href="{{ route('barang-keluar.edit', $barangKeluar->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                                                <form action="{{ route('barang-keluar.destroy', $barangKeluar->id) }}" method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus data?')">Hapus</button>
-                                                </form>
                                             </td>
                                         </tr>
                                         @endforeach

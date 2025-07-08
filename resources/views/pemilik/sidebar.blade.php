@@ -18,11 +18,7 @@
         <i class="fas fa-fw fa-tachometer-alt"></i>
         <span>dashboard</span></a>
 </li>
-<li class="nav-item">
-    <a class="nav-link" href="/activity-logs">
-        <i class="fas fa-fw fa-table"></i>
-        <span>Activity Log</span></a>
-</li>
+
 <li class="nav-item">
     <a class="nav-link" href="/pemilik/stok">
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="fas fa-fw bi bi-box-seam" viewBox="0 0 16 16">
@@ -44,6 +40,12 @@
     <a class="nav-link" href="/laporan">
         <i class="fas fa-fw fa-folder"></i>
         <span>Laporan Barang</span></a>
+</li>
+
+<li class="nav-item">
+    <a class="nav-link" href="/activity-logs">
+        <i class="fas fa-fw fa-table"></i>
+        <span>Activity Log</span></a>
 </li>
 
 <!-- Divider -->

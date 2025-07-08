@@ -64,11 +64,6 @@
                                             <td>{{ $bm->barang->satuan ?? '-' }}</td>
                                             <td>
                                                 <a href="{{ route('barang-masuk.edit', $bm->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                                                <form action="{{ route('barang-masuk.destroy', $bm->id) }}" method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus data?')">Hapus</button>
-                                                </form>
                                             </td>
                                         </tr>
                                         @endforeach

@@ -141,54 +141,77 @@ class BarangMasukController extends Controller
     }
 
     public function update(Request $request, $id)
-{
-    // Validasi data
-    $request->validate([
-        'barang_id' => 'required|exists:barangs,id', // Pastikan barang_id ada di tabel barangs
-        'jumlah' => 'required|integer|min:1',
-        'supplier_id' => 'required|exists:suppliers,id_supplier',
-        'tanggal_masuk' => 'required|date_format:d/m/Y', // Validasi format tanggal
-    ]);
+    {
+        // Validasi data
+        $request->validate([
+            'barang_id' => 'required|exists:barangs,id', // Pastikan barang_id ada di tabel barangs
+            'jumlah' => 'required|integer|min:1',
+            'supplier_id' => 'required|exists:suppliers,id_supplier',
+            'tanggal_masuk' => 'required|date_format:d/m/Y', // Validasi format tanggal
+        ]);
 
-    // Mengonversi tanggal dari format d/m/Y ke format Y-m-d
-    $tanggalMasuk = \Carbon\Carbon::createFromFormat('d/m/Y', $request->tanggal_masuk)->format('Y-m-d');
+        // Mengonversi tanggal dari format d/m/Y ke format Y-m-d
+        $tanggalMasuk = \Carbon\Carbon::createFromFormat('d/m/Y', $request->tanggal_masuk)->format('Y-m-d');
 
-    // Menemukan Barang Masuk berdasarkan ID
-    $barangMasuk = BarangMasuk::findOrFail($id);
-    $barangLama = $barangMasuk->barang; // Barang lama yang sebelumnya dipilih
+        // Menemukan Barang Masuk berdasarkan ID
+        $barangMasuk = BarangMasuk::findOrFail($id);
+        $barangLama = $barangMasuk->barang; // Barang lama yang sebelumnya dipilih
 
-    // Jika barang yang dipilih pada update berbeda dengan yang lama, kembalikan stok barang lama
-    if ($barangLama->id != $request->barang_id) {
-        // Mengembalikan stok barang lama yang sebelumnya berkurang
-        $barangLama->jumlah -= $barangMasuk->jumlah;
-        $barangLama->save();
+        // Ambil data barang baru yang dipilih
+        $barangBaru = Barang::findOrFail($request->barang_id);
+
+        if ($barangLama->id == $request->barang_id) {
+            // Hitung selisih jumlah yang baru dan yang lama
+            $stoklama = BarangMasuk::findOrFail($id);
+            $selisihJumlah = $stoklama->jumlah - $request->jumlah;
+            // dd($selisihJumlah);
+            if ($selisihJumlah < 0) {
+                // Jika jumlah baru lebih besar dari jumlah lama, kurangi stok barang baru
+                -$barangBaru->jumlah -= $selisihJumlah; // Tambahkan selisih ke stok barang baru
+                $barangBaru -> save();
+                // dd("ini baru",$barangBaru->jumlah);
+            } elseif ($selisihJumlah > 0) {
+                // Jika jumlah baru lebih kecil dari jumlah lama, kembalikan stok barang lama
+                $barangLama->jumlah -= $selisihJumlah; // Kembalikan selisih ke stok barang lama
+                // dd("ini lama",$barangLama->jumlah);
+                $barangLama->save(); // Pastikan disimpan ke database
+            }
+            else {
+                $barangLama -> jumlah += $selisihJumlah; // Jika tidak ada perubahan, kembalikan stok barang lama
+                // dd("ini tidak ada perubahan",$barangLama->jumlah);
+                $barangLama->save(); // Pastikan disimpan ke database
+            }
+            // dd($stoklama->jumlah, $request->jumlah, $barangMasuk->jumlah, $selisihJumlah);
+
+            // Sesuaikan stok barang
+            // $barangBaru->jumlah =$request->jumlah - $selisihJumlah;
+            // $barangBaru->save(); // Pastikan disimpan ke database
+            // dd("KANJUT",$barangLama->jumlah, $barangMasuk->jumlah, $barangBaru->jumlah);
+        } else {
+            // Jika barang berubah, kembalikan stok barang lama dan update stok barang baru
+            // $barangLama->jumlah += $barangMasuk->jumlah;
+            $barangLama->jumlah -= $barangMasuk->jumlah;
+        //     $barangLama->save();
+            $barangLama->save();
+        
+            $barangBaru->jumlah += $request->jumlah; // Update stok barang baru
+            $barangBaru->save(); // Pastikan disimpan ke database
+        // dd("Barang lama stoknya sudah dikembalikan",$barangBaru->jumlah);
+        }
+        // Update data barang masuk dengan data yang baru
+        $barangMasuk->update([
+            'barang_id' => $request->barang_id,
+            'supplier_id' => $request->supplier_id,
+            'jumlah' => $request->jumlah,
+            'tanggal_masuk' => $tanggalMasuk, // Menyimpan tanggal masuk
+        ]);
+
+        // Menambahkan log aktivitas
+        $this->activityLogService->logActivity('Update Barang Masuk', 'BarangMasuk', $barangMasuk->toArray());
+
+        return redirect()->route('barang-masuk.index')->with('success', 'Barang masuk berhasil diperbarui dan stok diperbarui.');
     }
 
-    // Ambil data barang baru yang dipilih
-    $barangBaru = Barang::findOrFail($request->barang_id);
-
-    // Cek apakah stok cukup di barang baru
-    if ($request->jumlah > $barangBaru->jumlah) {
-        return back()->withErrors(['jumlah' => 'Jumlah masuk tidak boleh melebihi stok yang tersedia.']);
-    }
-
-    // Update data barang masuk dengan data yang baru
-    $barangMasuk->update([
-        'barang_id' => $request->barang_id,
-        'supplier_id' => $request->supplier_id,
-        'jumlah' => $request->jumlah,
-        'tanggal_masuk' => $tanggalMasuk, // Menyimpan tanggal masuk
-    ]);
-
-    // Kurangi stok barang baru setelah update
-    $barangBaru->jumlah += $request->jumlah; // Menambah stok barang baru sesuai jumlah
-    $barangBaru->save();
-
-    // Menambahkan log aktivitas
-    $this->activityLogService->logActivity('Update Barang Masuk', 'BarangMasuk', $barangMasuk->toArray());
-
-    return redirect()->route('barang-masuk.index')->with('success', 'Barang masuk berhasil diperbarui dan stok diperbarui.');
-}
 
 
 

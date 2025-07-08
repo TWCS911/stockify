@@ -28,9 +28,6 @@
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Data Supplier</h1>
-                        <a href="{{ route('suppliers.create') }}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <i class="fas fa-plus fa-sm text-white-50"></i> Tambah Supplier
-                        </a>
                     </div>
 
                     @if(session('success'))
@@ -64,11 +61,6 @@
                                             <td>{{ $supplier->no_telp_supplier ?? '-' }}</td>
                                             <td>
                                                 <a href="{{ route('suppliers.edit', $supplier->id_supplier) }}" class="btn btn-sm btn-primary">Edit</a>
-                                                <form action="{{ route('suppliers.destroy', $supplier->id_supplier) }}" method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Yakin hapus data?')">Hapus</button>
-                                                </form>
                                             </td>
                                         </tr>
                                         @endforeach
